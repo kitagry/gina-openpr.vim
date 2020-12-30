@@ -11,6 +11,11 @@ function! s:build_base_url(remote_url) abort
   return ''
 endfunction
 
+function! s:get_default_branch() abort
+    let l:refs = split(system('git symbolic-ref refs/remotes/origin/HEAD'), '/')
+    return trim(l:refs[len(l:refs)-1])
+endfunction
+
 function! s:echo_err_message(message) abort
   echohl Error
   echo a:message
@@ -43,8 +48,10 @@ function! gina_openpr#openpr() abort
   if l:match[1] != -1
     let l:pr = l:match[0][2:len(l:match[0])-2]
   else
-    let l:message = system(printf('git log --merges --oneline --reverse --ancestry-path --format=%%s %s...master | head -n 1', l:commit_hash))
+    let l:main_branch = s:get_default_branch()
+    let l:message = system(printf('git log --merges --oneline --reverse --ancestry-path --format=%%s %s...%s | head -n 1', l:commit_hash, l:main_branch))
     let l:match = matchstrpos(l:message, '^Merge pull request #\d\+')
+    echomsg l:message
     if l:match[1] == -1
       call s:echo_err_message('can not find PR commit')
       return
