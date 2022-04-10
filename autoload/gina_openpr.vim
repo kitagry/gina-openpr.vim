@@ -56,7 +56,7 @@ function! s:get_pr_url_with_github_commit(commit_hash) abort
   return printf('%s/pull/%s', l:url, l:pr)
 endfunction
 
-function! s:get_pr_url_with_gh_cli(commit_hash)
+function! s:get_pr_url_with_gh_cli(commit_hash) abort
   let l:query =<< END
 query($owner: String!, $name: String!, $commitHash: String!) {
   repository(owner: $owner, name: $name) {
@@ -80,7 +80,14 @@ END
     echoerr l:response_json['errors'][0]['message']
     return ''
   endif
-  let l:url = json_decode(l:response)['data']['repository']['object']['associatedPullRequests']['edges'][0]['node']['url']
+  let l:url = l:response_json['data']['repository']['object']['associatedPullRequests']['edges'][0]['node']['url']
+  return l:url
+endfunction
+
+function s:get_pr_url_with_github_commit(commit_hash) abort
+  let l:response = system("glab api projects/:id/repository/commits/" . a:commit_hash . "/merge_requests")
+  let l:response_json = json_decode(l:response)
+  let l:url = l:response_json[0]['web_url']
   return l:url
 endfunction
 
@@ -111,5 +118,11 @@ function! gina_openpr#openpr() abort
       return
     endif
     call gina#util#open(s:get_pr_url_with_github_commit(l:commit_hash))
+  else
+    if executable("glab")
+      echoerr "Please install https://github.com/profclems/glab"
+      return
+    endif
+    call gina#util#open(s:get_mr_url_with_glab_cli(l:commit_hash))
   endif
 endfunction
