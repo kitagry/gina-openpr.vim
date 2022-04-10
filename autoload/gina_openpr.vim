@@ -84,7 +84,7 @@ END
   return l:url
 endfunction
 
-function s:get_pr_url_with_github_commit(commit_hash) abort
+function s:get_mr_url_with_glab_cli(commit_hash) abort
   let l:response = system("glab api projects/:id/repository/commits/" . a:commit_hash . "/merge_requests")
   let l:response_json = json_decode(l:response)
   let l:url = l:response_json[0]['web_url']
@@ -119,7 +119,7 @@ function! gina_openpr#openpr() abort
     endif
     call gina#util#open(s:get_pr_url_with_github_commit(l:commit_hash))
   else
-    if executable("glab")
+    if !executable("glab")
       echoerr "Please install https://github.com/profclems/glab"
       return
     endif
